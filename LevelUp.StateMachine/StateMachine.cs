@@ -1,91 +1,78 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using LevelUp.StateMachine.EventArgs;
 
 namespace LevelUp.StateMachine
 {
     /// <summary>
-    /// 
+    /// StateMachine class, ease to use finite state machine
     /// </summary>
-    /// <typeparam name="TState"></typeparam>
-    /// <typeparam name="TCommand"></typeparam>
+    /// <typeparam name="TState">state</typeparam>
+    /// <typeparam name="TCommand">command</typeparam>
     public class StateMachine<TState, TCommand>
+        where TState : Enum
+        where TCommand : Enum
     {
         #region Private fields
-        private TState _currentState;
-        private Dictionary<TransitionKey<TState, TCommand>, TState> _transitions;
+        private IDictionary<(TState, TCommand), TState> _translations;
+        private HashSet<(TState, TState)> _translationPool;
         #endregion
 
         #region Constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="StateMachine{TState, TCommand}" /> class.
+        /// Constructor
         /// </summary>
-        /// <param name="state">The state.</param>
-        public StateMachine(TState state)
+        /// <param name="currentState">currentState</param>
+        /// <param name="translations">translations, which define relation between states with command</param>
+        public StateMachine(TState currentState,
+            IEnumerable<KeyValuePair<(TState, TCommand), TState>> translations = null)
         {
-            this.CurrentState = state;
+            this.CurrentState = currentState;
+
+            LoadTranslations(translations);
         }
         #endregion
 
         #region Public properties
         /// <summary>
-        /// Gets the state of the current.
+        /// Gets the state.
         /// </summary>
         /// <value>
-        /// The state of the current.
+        /// The state.
         /// </value>
-        public TState CurrentState
-        {
-            get { return _currentState; }
-            protected set
-            {
-                if (_currentState.Equals(value))
-                    return;
+        public TState CurrentState { get; protected set; }
 
-                _currentState = value;
+        /// <summary>
+        /// Gets the translations.
+        /// </summary>
+        public IDictionary<(TState, TCommand), TState> Translations
+        {
+            get { return _translations ??= new Dictionary<(TState, TCommand), TState>(); }
+        }
+        #endregion
+
+        #region Private properties
+        private HashSet<(TState, TState)> TranslationPool
+        {
+            get
+            {
+                return _translationPool ??= Translations.Select(item => (item.Key.Item1, item.Value)).ToHashSet();
             }
         }
         #endregion
 
-        #region Protected properties
         /// <summary>
-        /// Gets the m_ transitions.
         /// </summary>
-        /// <value>
-        /// The m_ transitions.
-        /// </value>
-        protected Dictionary<TransitionKey<TState, TCommand>, TState> m_Transitions
+        /// <param name="translations"></param>
+        private void LoadTranslations(IEnumerable<KeyValuePair<(TState, TCommand), TState>> translations)
         {
-            get { return _transitions ?? (_transitions = new Dictionary<TransitionKey<TState, TCommand>, TState>()); }
-        }
-        #endregion
+            if (translations == null)
+                return;
 
-        /// <summary>
-        /// Adds the translation.
-        /// </summary>
-        /// <param name="baseState">State of the base.</param>
-        /// <param name="command">The command.</param>
-        /// <param name="targetState">State of the target.</param>
-        /// <returns></returns>
-        public StateMachine<TState, TCommand> AddTranslation(TState baseState, TCommand command, TState targetState)
-        {
-            var key = new TransitionKey<TState, TCommand>(baseState, command);
-
-            if (this.m_Transitions.ContainsKey(key))
-                throw new Exception("Duplicated translation!!");
-
-            this.m_Transitions.Add(key, targetState);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Loads the state.
-        /// </summary>
-        /// <param name="targetState">State of the target.</param>
-        public void LoadState(TState targetState)
-        {
-            this.CurrentState = targetState;
+            var currentTranslations = this.Translations;
+            currentTranslations.Clear();
+            foreach (var translation in translations) currentTranslations.Add(translation);
         }
 
         /// <summary>
@@ -99,15 +86,31 @@ namespace LevelUp.StateMachine
             OnCommandTrigger(new CommandEventArgs<TCommand>(command, args));
 
             var currentState = this.CurrentState;
-            var key = new TransitionKey<TState, TCommand>(currentState, command);
+            var translations = this.Translations;
+            var key = (currentState, command);
+            var haveTranslation = translations.TryGetValue(key, out var targetState);
 
-            if (!this.m_Transitions.ContainsKey(key))
-                throw new Exception(string.Format("Translation({0}.{1}) not found!!", currentState.ToString(),
-                    command.ToString()));
+            if (!haveTranslation)
+                throw new Exception($"Translation({currentState.ToString()}.{command.ToString()}) not found!!");
 
-            var state = this.m_Transitions[key];
+            ChangeToState(targetState, args);
+        }
 
-            ChangeToState(state, args);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="targetState"></param>
+        /// <param name="args"></param>
+        public void TranslateTo(TState targetState, params object[] args)
+        {
+            var currentState = this.CurrentState;
+            var key = (currentState, targetState);
+            var haveTranslation =  TranslationPool.Contains(key);
+            
+            if (!haveTranslation)
+                throw new Exception($"Translation form {currentState.ToString()} to {targetState.ToString()} is not found!!");
+                
+            ChangeToState(targetState, args);
         }
 
         #region Protected methods
@@ -134,26 +137,15 @@ namespace LevelUp.StateMachine
         /// <param name="e">The <see cref="CommandEventArgs{TCommand}" /> instance containing the event data.</param>
         protected void OnCommandTrigger(CommandEventArgs<TCommand> e)
         {
-            var handler = CommandTrigger;
-
-            if (handler == null)
-                return;
-
-            handler(this, e);
+            CommandTrigger?.Invoke(this, e);
         }
 
         /// <summary>
-        /// Raises the <see cref="E:StateChanged" /> event.
         /// </summary>
-        /// <param name="e">The <see cref="StateChangedEventArgs{TState}" /> instance containing the event data.</param>
+        /// <param name="e"></param>
         protected void OnStateChanged(StateChangedEventArgs e)
         {
-            var handler = StateChanged;
-
-            if (handler == null)
-                return;
-
-            handler(this, e);
+            StateChanged?.Invoke(this, e);
         }
 
         /// <summary>
@@ -162,45 +154,22 @@ namespace LevelUp.StateMachine
         /// <param name="e">The <see cref="StateChangingEventArgs{TState}" /> instance containing the event data.</param>
         protected void OnStateChanging(StateChangingEventArgs<TState> e)
         {
-            var handler = StateChanging;
-
-            if (handler == null)
-                return;
-
-            handler(this, e);
+            StateChanging?.Invoke(this, e);
         }
         #endregion
 
         #region Others
-        public event EventHandler<CommandEventArgs<TCommand>> CommandTrigger;
-
-        public event EventHandler<StateChangedEventArgs> StateChanged;
-
-        public event EventHandler<StateChangingEventArgs<TState>> StateChanging;
-        #endregion
-
-        #region Nested types
         /// <summary>
         /// </summary>
-        /// <typeparam name="TS">The type of the s.</typeparam>
-        /// <typeparam name="TC">The type of the c.</typeparam>
-        protected struct TransitionKey<TS, TC>
-        {
-            #region Constructors
-            public TransitionKey(TS state, TC command)
-                : this()
-            {
-                this.State = state;
-                this.Command = command;
-            }
-            #endregion
+        public event EventHandler<CommandEventArgs<TCommand>> CommandTrigger;
 
-            #region Public properties
-            public TC Command { get; }
+        /// <summary>
+        /// </summary>
+        public event EventHandler<StateChangedEventArgs> StateChanged;
 
-            public TS State { get; }
-            #endregion
-        }
+        /// <summary>
+        /// </summary>
+        public event EventHandler<StateChangingEventArgs<TState>> StateChanging;
         #endregion
     }
 }

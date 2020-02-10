@@ -1,19 +1,30 @@
 namespace LevelUp.StateMachine.EventArgs
 {
+    /// <summary>
+    /// </summary>
+    /// <typeparam name="TCommand"></typeparam>
     public class CommandEventArgs<TCommand> : System.EventArgs
     {
-        #region Properties
-        public System.Object[] Args { get; protected set; }
-
-        public TCommand Command { get; protected set; }
-        #endregion Properties
-
-        #region Constructors
-        public CommandEventArgs(TCommand command, params System.Object[] args)
+        #region Constructors
+        /// <summary>
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="args"></param>
+        public CommandEventArgs(TCommand command, params object[] args)
         {
             this.Command = command;
             this.Args = args;
         }
-        #endregion Constructors
+        #endregion
+
+        #region Public properties
+        /// <summary>
+        /// </summary>
+        public object[] Args { get; protected set; }
+
+        /// <summary>
+        /// </summary>
+        public TCommand Command { get; protected set; }
+        #endregion
     }
 }
