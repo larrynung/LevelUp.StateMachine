@@ -16,126 +16,104 @@ namespace LevelUp.StateMachine
     {
         #region Private fields
         private IDictionary<(TState, TCommand), TState> _translations;
-        private HashSet<(TState, TState)> _translationPool;
         #endregion
 
         #region Constructors
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="currentState">currentState</param>
         /// <param name="translations">translations, which define relation between states with command</param>
-        public StateMachine(TState currentState,
-            IEnumerable<KeyValuePair<(TState, TCommand), TState>> translations = null)
+        public StateMachine(IDictionary<(TState, TCommand), TState> translations = null)
         {
-            this.CurrentState = currentState;
-
-            LoadTranslations(translations);
+            this.Translations = translations;
         }
         #endregion
 
-        #region Public properties
-        /// <summary>
-        /// Gets the state.
-        /// </summary>
-        /// <value>
-        /// The state.
-        /// </value>
-        public TState CurrentState { get; protected set; }
-
+        #region Protected properties
         /// <summary>
         /// Gets the translations.
         /// </summary>
-        public IDictionary<(TState, TCommand), TState> Translations
+        protected IDictionary<(TState, TCommand), TState> Translations
         {
             get { return _translations ??= new Dictionary<(TState, TCommand), TState>(); }
+            set { _translations = value; }
         }
         #endregion
 
-        #region Private properties
-        private HashSet<(TState, TState)> TranslationPool
-        {
-            get
-            {
-                return _translationPool ??= Translations.Select(item => (item.Key.Item1, item.Value)).ToHashSet();
-            }
-        }
-        #endregion
-
+        #region Public methods
         /// <summary>
         /// </summary>
-        /// <param name="translations"></param>
-        private void LoadTranslations(IEnumerable<KeyValuePair<(TState, TCommand), TState>> translations)
+        /// <param name="stateData"></param>
+        /// <param name="targetState"></param>
+        /// <param name="args"></param>
+        /// <exception cref="Exception"></exception>
+        public StateData<TState> TranslateTo(StateData<TState> stateData, TState targetState, params object[] args)
         {
-            if (translations == null)
-                return;
+            var currentState = stateData.State;
+            var haveTranslation = this.Translations.Any(item =>
+                Equals(item.Key.Item1, currentState) && Equals(item.Value, targetState));
 
-            var currentTranslations = this.Translations;
-            currentTranslations.Clear();
-            foreach (var translation in translations) currentTranslations.Add(translation);
+            if (!haveTranslation)
+            {
+                throw new Exception(
+                    $"Translation form {currentState.ToString()} to {targetState.ToString()} is not found!!");
+            }
+
+            ChangeToState(stateData, targetState, args);
+
+            return stateData;
         }
 
         /// <summary>
         /// Triggers the command.
         /// </summary>
+        /// <param name="stateData"></param>
         /// <param name="command">The command.</param>
         /// <param name="args">The arguments.</param>
         /// <exception cref="Exception"></exception>
-        public void Trigger(TCommand command, params object[] args)
+        public StateData<TState> Trigger(StateData<TState> stateData, TCommand command, params object[] args)
         {
-            OnCommandTrigger(new CommandEventArgs<TCommand>(command, args));
+            OnCommandTrigger(new CommandEventArgs<TState, TCommand>(stateData, command, args));
 
-            var currentState = this.CurrentState;
-            var translations = this.Translations;
+            var currentState = stateData.State;
             var key = (currentState, command);
-            var haveTranslation = translations.TryGetValue(key, out var targetState);
+            var haveTranslation = this.Translations.TryGetValue(key, out var targetState);
 
             if (!haveTranslation)
                 throw new Exception($"Translation({currentState.ToString()}.{command.ToString()}) not found!!");
 
-            ChangeToState(targetState, args);
-        }
+            ChangeToState(stateData, targetState, args);
 
+            return stateData;
+        }
+        
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="sourceState"></param>
+        /// <param name="command"></param>
         /// <param name="targetState"></param>
-        /// <param name="args"></param>
-        public void TranslateTo(TState targetState, params object[] args)
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public StateMachine<TState, TCommand> AddTranslation(TState sourceState, TCommand command, TState targetState)
         {
-            var currentState = this.CurrentState;
-            var key = (currentState, targetState);
-            var haveTranslation =  TranslationPool.Contains(key);
-            
-            if (!haveTranslation)
-                throw new Exception($"Translation form {currentState.ToString()} to {targetState.ToString()} is not found!!");
-                
-            ChangeToState(targetState, args);
+            var translations = this.Translations;
+            var key = (sourceState, command);
+
+            if (translations.ContainsKey(key))
+                throw new Exception("Duplicated translation!!");
+
+            translations[key] = targetState;
+
+            return this;
         }
+        #endregion
 
         #region Protected methods
         /// <summary>
-        /// Changes to state.
         /// </summary>
-        /// <param name="targetState">State of the target.</param>
-        /// <param name="args">The arguments.</param>
-        protected void ChangeToState(TState targetState, params object[] args)
-        {
-            if (this.CurrentState.Equals(targetState))
-                return;
-
-            OnStateChanging(new StateChangingEventArgs<TState>(targetState, args));
-
-            this.CurrentState = targetState;
-
-            OnStateChanged(new StateChangedEventArgs(args));
-        }
-
-        /// <summary>
-        /// Raises the <see cref="E:CommandTrigger" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="CommandEventArgs{TCommand}" /> instance containing the event data.</param>
-        protected void OnCommandTrigger(CommandEventArgs<TCommand> e)
+        /// <param name="e"></param>
+        protected void OnCommandTrigger(CommandEventArgs<TState, TCommand> e)
         {
             CommandTrigger?.Invoke(this, e);
         }
@@ -143,7 +121,7 @@ namespace LevelUp.StateMachine
         /// <summary>
         /// </summary>
         /// <param name="e"></param>
-        protected void OnStateChanged(StateChangedEventArgs e)
+        protected void OnStateChanged(StateChangedEventArgs<TState> e)
         {
             StateChanged?.Invoke(this, e);
         }
@@ -157,15 +135,35 @@ namespace LevelUp.StateMachine
             StateChanging?.Invoke(this, e);
         }
         #endregion
+        
+        #region Private methods
+        /// <summary>
+        /// Changes to state.
+        /// </summary>
+        /// <param name="stateData"></param>
+        /// <param name="targetState">State of the target.</param>
+        /// <param name="args">The arguments.</param>
+        private void ChangeToState(StateData<TState> stateData, TState targetState, params object[] args)
+        {
+            if (stateData.State.Equals(targetState))
+                return;
+
+            OnStateChanging(new StateChangingEventArgs<TState>(stateData, targetState, args));
+
+            stateData.State = targetState;
+
+            OnStateChanged(new StateChangedEventArgs<TState>(stateData, args));
+        }
+        #endregion
 
         #region Others
         /// <summary>
         /// </summary>
-        public event EventHandler<CommandEventArgs<TCommand>> CommandTrigger;
+        public event EventHandler<CommandEventArgs<TState, TCommand>> CommandTrigger;
 
         /// <summary>
         /// </summary>
-        public event EventHandler<StateChangedEventArgs> StateChanged;
+        public event EventHandler<StateChangedEventArgs<TState>> StateChanged;
 
         /// <summary>
         /// </summary>

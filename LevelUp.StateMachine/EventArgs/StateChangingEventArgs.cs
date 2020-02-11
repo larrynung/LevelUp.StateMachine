@@ -1,17 +1,22 @@
+using System;
+
 namespace LevelUp.StateMachine.EventArgs
 {
     /// <summary>
     /// </summary>
     /// <typeparam name="TState"></typeparam>
     public class StateChangingEventArgs<TState> : System.EventArgs
+        where TState : Enum
     {
         #region Constructors
         /// <summary>
         /// </summary>
+        /// <param name="stateData"></param>
         /// <param name="newState"></param>
         /// <param name="args"></param>
-        public StateChangingEventArgs(TState newState, params object[] args)
+        public StateChangingEventArgs(StateData<TState> stateData, TState newState, params object[] args)
         {
+            this.StateData = stateData;
             this.NewState = newState;
             this.Args = args;
         }
@@ -20,11 +25,15 @@ namespace LevelUp.StateMachine.EventArgs
         #region Public properties
         /// <summary>
         /// </summary>
-        public object[] Args { get; protected set; }
+        public object[] Args { get; }
 
         /// <summary>
         /// </summary>
-        public TState NewState { get; protected set; }
+        public TState NewState { get; }
+
+        /// <summary>
+        /// </summary>
+        public StateData<TState> StateData { get; }
         #endregion
     }
 }
