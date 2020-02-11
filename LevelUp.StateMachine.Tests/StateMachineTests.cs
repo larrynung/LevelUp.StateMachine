@@ -13,16 +13,12 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             const StateType expected = StateType.State2;
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var stateData = new StateData<StateType>(StateType.State1);
+            var target = new MyStateMachine();
             var actual = default(StateType);
 
             // Act
-            target.Trigger(CommandType.Command1);
-            actual = target.CurrentState;
+            actual = target.Trigger(stateData, CommandType.Command1).State;
 
             // Assert
             Assert.AreEqual(expected, actual);
@@ -32,78 +28,79 @@ namespace LevelUp.StateMachine.Tests
         public void Trigger_WithAcceptableCommand_CommandTriggerEventInvoked()
         {
             // Arrange
-            const bool expected = true;
+            var stateData = new StateData<StateType>(StateType.State1);
             var translations = new Dictionary<(StateType, CommandType), StateType>
             {
                 {(StateType.State1, CommandType.Command1), StateType.State2}
             };
-            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var target = new StateMachine<StateType, CommandType>(translations);
             var actual = default(bool);
 
             target.CommandTrigger += (sender, args) => { actual = true; };
                 
             // Act
-            target.Trigger(CommandType.Command1);
+            target.Trigger(stateData, CommandType.Command1);
 
             // Assert
-            Assert.AreEqual(expected, actual);
+            Assert.IsTrue(actual);
         }
         
         [Test]
         public void Trigger_WithAcceptableCommand_StateChangingEventInvoked()
         {
             // Arrange
-            const bool expected = true;
+            var stateData = new StateData<StateType>(StateType.State1);
             var translations = new Dictionary<(StateType, CommandType), StateType>
             {
                 {(StateType.State1, CommandType.Command1), StateType.State2}
             };
-            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var target = new StateMachine<StateType, CommandType>(translations);
             var actual = default(bool);
 
             target.StateChanging += (sender, args) => { actual = true; };
                 
             // Act
-            target.Trigger(CommandType.Command1);
+            target.Trigger(stateData, CommandType.Command1);
 
             // Assert
-            Assert.AreEqual(expected, actual);
+            Assert.IsTrue(actual);
         }
         
         [Test]
         public void Trigger_WithAcceptableCommand_StateChangedEventInvoked()
         {
             // Arrange
-            const bool expected = true;
+            var stateData = new StateData<StateType>(StateType.State1);
             var translations = new Dictionary<(StateType, CommandType), StateType>
             {
                 {(StateType.State1, CommandType.Command1), StateType.State2}
             };
-            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var target = new StateMachine<StateType, CommandType>(translations);
             var actual = default(bool);
 
             target.StateChanged += (sender, args) => { actual = true; };
                 
             // Act
-            target.Trigger(CommandType.Command1);
+            target.Trigger(stateData, CommandType.Command1);
 
             // Assert
-            Assert.AreEqual(expected, actual);
+            Assert.IsTrue(actual);
         }
 
         [Test]
         public void Trigger_WithUnAcceptableCommand_Exception()
         {
             // Arrange
+            var stateData = new StateData<StateType>(StateType.State1);
             var translations = new Dictionary<(StateType, CommandType), StateType>
             {
                 {(StateType.State1, CommandType.Command1), StateType.State2}
             };
-            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var target = new StateMachine<StateType, CommandType>(translations);
             var actual = default(Exception);
 
             // Act
-            actual = Assert.Throws<Exception>(() => target.Trigger(CommandType.Command2));
+            actual = Assert.Throws<Exception>(() => target.Trigger(stateData, CommandType.Command2));
 
             // Assert
             Assert.IsNotNull(actual);
@@ -114,30 +111,94 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             const StateType expected = StateType.State2;
+            var stateData = new StateData<StateType>(StateType.State1);
             var translations = new Dictionary<(StateType, CommandType), StateType>
             {
                 {(StateType.State1, CommandType.Command1), StateType.State2}
             };
-            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var target = new StateMachine<StateType, CommandType>(translations);
             var actual = default(StateType);
 
             // Act
-            target.TranslateTo(StateType.State2);
-            actual = target.CurrentState;
+            actual = target.TranslateTo(stateData, StateType.State2).State;
 
             // Assert
             Assert.AreEqual(expected, actual);
         }
+        
+        [Test]
+        public void TranslateTo_WithAcceptableTargetState_CommandTriggerEventNotInvoke()
+        {
+            // Arrange
+            var stateData = new StateData<StateType>(StateType.State1);
+            var translations = new Dictionary<(StateType, CommandType), StateType>
+            {
+                {(StateType.State1, CommandType.Command1), StateType.State2}
+            };
+            var target = new StateMachine<StateType, CommandType>(translations);
+            var actual = default(bool);
 
+            target.CommandTrigger += (sender, args) => { actual = true; };
+
+            // Act
+            target.TranslateTo(stateData, StateType.State2);
+
+            // Assert
+            Assert.IsFalse(actual);
+        }
+        
+        [Test]
+        public void TranslateTo_WithAcceptableTargetState_StateChangingEventInvoked()
+        {
+            // Arrange
+            var stateData = new StateData<StateType>(StateType.State1);
+            var translations = new Dictionary<(StateType, CommandType), StateType>
+            {
+                {(StateType.State1, CommandType.Command1), StateType.State2}
+            };
+            var target = new StateMachine<StateType, CommandType>(translations);
+            var actual = default(bool);
+
+            target.StateChanging += (sender, args) => { actual = true; };
+
+            // Act
+            target.TranslateTo(stateData, StateType.State2);
+
+            // Assert
+            Assert.IsTrue(actual);
+        }
+
+        [Test]
+        public void TranslateTo_WithAcceptableTargetState_StateChangedEventInvoked()
+        {
+            // Arrange
+            var stateData = new StateData<StateType>(StateType.State1);
+            var translations = new Dictionary<(StateType, CommandType), StateType>
+            {
+                {(StateType.State1, CommandType.Command1), StateType.State2}
+            };
+            var target = new StateMachine<StateType, CommandType>(translations);
+            var actual = default(bool);
+
+            target.StateChanged += (sender, args) => { actual = true; };
+
+            // Act
+            target.TranslateTo(stateData, StateType.State2);
+
+            // Assert
+            Assert.IsTrue(actual);
+        }
+        
         [Test]
         public void TranslateTo_WithUnAcceptableTargetState_Exception()
         {
             // Arrange
-            var target = new StateMachine<StateType, CommandType>(StateType.State1);
+            var stateData = new StateData<StateType>(StateType.State1);
+            var target = new StateMachine<StateType, CommandType>();
             var actual = default(Exception);
 
             // Act
-            actual = Assert.Throws<Exception>(() => target.TranslateTo(StateType.State2));
+            actual = Assert.Throws<Exception>(() => target.TranslateTo(stateData, StateType.State2));
 
             // Assert
             Assert.IsNotNull(actual);
