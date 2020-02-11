@@ -7,13 +7,12 @@ namespace LevelUp.StateMachine.Tests
     public class StateMachineBuilderTests
     {
         [Test]
-        public void Build_WithCurrentState_ReturnStateMachineWithCurrentState()
+        public void Build_Invoke_ReturnStateMachineWithCurrentState()
         {
             // Arrange
             const StateType state = StateType.State1;
             const StateType expected = state;
-            var target = StateMachineBuilder<StateType, CommandType>
-                .Create(state);
+            var target = new StateMachineBuilder<StateType, CommandType>(state);
             var actual = default(StateType);
             
             // Act
@@ -24,12 +23,10 @@ namespace LevelUp.StateMachine.Tests
         }
         
         [Test]
-        public void Build_WithTransactions_ReturnStateMachine()
+        public void Build_Invokes_ReturnStateMachine()
         {
             // Arrange
-            var target = StateMachineBuilder<StateType, CommandType>
-                .Create(StateType.State1)
-                .AddTranslation(StateType.State1, CommandType.Command1, StateType.State2);
+            var target = new StateMachineBuilder<StateType, CommandType>();
             var actual = default(Type);
             var expected = typeof(StateMachine<StateType, CommandType>);
 
