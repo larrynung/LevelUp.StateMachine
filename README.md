@@ -4,6 +4,14 @@
 ## Instance StateMachine
 
 ```C#
+// Instance StateMachine
+var stateMachine = new StateMachine<StateType, CommandType>();
+```
+
+
+<br>
+
+```C#
 var translations = new Dictionary<(StateType, CommandType), StateType>
 {
     {(StateType.State1, CommandType.Command1), StateType.State2},
@@ -35,6 +43,15 @@ public class MyStateMachine : StateMachine<StateType, CommandType>
 // Instance StateMachine
 var stateMachine = new MyStateMachine();
 ```
+
+## Add translations
+
+```C#
+stateMachine
+    .AddTranslation(StateType.State1, CommandType.Command1, StateType.State2)
+    .AddTranslation(StateType.State2, CommandType.Command2, StateType.State3);
+```
+
 
 ## Init StateData
 
@@ -83,15 +100,15 @@ Console.WriteLine(stateMachine.TranslateTo(stateData, StateType.State3).State);
 ## Event handling
 
 ```C#
-stateMachine.CommandTrigger += (sender, e) => { 
+stateMachine.CommandTrigger += (sender, args) => { 
     Console.WriteLine("CommandTrigger..."); 
 };
 
-stateMachine.StateChanging += (sender, e) => { 
+stateMachine.StateChanging += (sender, args) => { 
     Console.WriteLine("StateChanging..."); 
 };
 
-stateMachine.StateChanged += (sender, e) => { 
+stateMachine.StateChanged += (sender, args) => { 
     Console.WriteLine("StateChanged..."); 
 };
 ```
