@@ -37,11 +37,18 @@ namespace LevelUp.StateMachine
         }
         #endregion
 
-        private StateMachineBuilder()
+        /// <summary>
+        /// 
+        /// </summary>
+        public StateMachineBuilder()
         {
         }
 
-        private StateMachineBuilder(TState currentState)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="currentState"></param>
+        public StateMachineBuilder(TState currentState)
             : this()
         {
             LoadState(currentState);

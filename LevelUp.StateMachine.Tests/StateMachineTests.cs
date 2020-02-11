@@ -27,6 +27,69 @@ namespace LevelUp.StateMachine.Tests
             // Assert
             Assert.AreEqual(expected, actual);
         }
+        
+        [Test]
+        public void Trigger_WithAcceptableCommand_CommandTriggerEventInvoked()
+        {
+            // Arrange
+            const bool expected = true;
+            var translations = new Dictionary<(StateType, CommandType), StateType>
+            {
+                {(StateType.State1, CommandType.Command1), StateType.State2}
+            };
+            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var actual = default(bool);
+
+            target.CommandTrigger += (sender, args) => { actual = true; };
+                
+            // Act
+            target.Trigger(CommandType.Command1);
+
+            // Assert
+            Assert.AreEqual(expected, actual);
+        }
+        
+        [Test]
+        public void Trigger_WithAcceptableCommand_StateChangingEventInvoked()
+        {
+            // Arrange
+            const bool expected = true;
+            var translations = new Dictionary<(StateType, CommandType), StateType>
+            {
+                {(StateType.State1, CommandType.Command1), StateType.State2}
+            };
+            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var actual = default(bool);
+
+            target.StateChanging += (sender, args) => { actual = true; };
+                
+            // Act
+            target.Trigger(CommandType.Command1);
+
+            // Assert
+            Assert.AreEqual(expected, actual);
+        }
+        
+        [Test]
+        public void Trigger_WithAcceptableCommand_StateChangedEventInvoked()
+        {
+            // Arrange
+            const bool expected = true;
+            var translations = new Dictionary<(StateType, CommandType), StateType>
+            {
+                {(StateType.State1, CommandType.Command1), StateType.State2}
+            };
+            var target = new StateMachine<StateType, CommandType>(StateType.State1, translations);
+            var actual = default(bool);
+
+            target.StateChanged += (sender, args) => { actual = true; };
+                
+            // Act
+            target.Trigger(CommandType.Command1);
+
+            // Assert
+            Assert.AreEqual(expected, actual);
+        }
 
         [Test]
         public void Trigger_WithUnAcceptableCommand_Exception()
