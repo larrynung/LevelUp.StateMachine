@@ -86,9 +86,11 @@ Console.WriteLine(stateMachine.TranslateTo(stateData, StateType.State3).State);
 stateMachine.CommandTrigger += (sender, args) => { 
     Console.WriteLine("CommandTrigger..."); 
 };
+
 stateMachine.StateChanging += (sender, args) => { 
     Console.WriteLine("StateChanging..."); 
 };
+
 stateMachine.StateChanged += (sender, args) => { 
     Console.WriteLine("StateChanged..."); 
 };
