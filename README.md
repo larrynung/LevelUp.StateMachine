@@ -79,3 +79,17 @@ Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Command1).State);
 // Read current state
 Console.WriteLine(stateMachine.TranslateTo(stateData, StateType.State3).State); 
 ```
+
+## Event handling
+
+```C#
+stateMachine.CommandTrigger += (sender, args) => { 
+    Console.WriteLine("CommandTrigger..."); 
+};
+stateMachine.StateChanging += (sender, args) => { 
+    Console.WriteLine("StateChanging..."); 
+};
+stateMachine.StateChanged += (sender, args) => { 
+    Console.WriteLine("StateChanged..."); 
+};
+```
