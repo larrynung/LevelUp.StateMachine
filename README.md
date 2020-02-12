@@ -4,21 +4,6 @@
 
 ### Package Manager
 
-<<<<<<< Updated upstream
-    Install-Package LevelUp.StateMachine
-
-### .NET CLI
-
-    dotnet add package LevelUp.StateMachine
-
-### PackageReference
-
-    <PackageReference Include="LevelUp.StateMachine" />
-
-### Packet CLI
-
-    paket add LevelUp.StateMachine
-=======
     Install-Package LevelUp.StateMachine -Version 2.0.1
 
 ### .NET CLI
@@ -32,7 +17,6 @@
 ### Packet CLI
 
     paket add LevelUp.StateMachine --version 2.0.1
->>>>>>> Stashed changes
 
 
 ## Tutorial
