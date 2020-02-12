@@ -4,6 +4,7 @@
 
 ### Package Manager
 
+<<<<<<< Updated upstream
     Install-Package LevelUp.StateMachine
 
 ### .NET CLI
@@ -17,6 +18,21 @@
 ### Packet CLI
 
     paket add LevelUp.StateMachine
+=======
+    Install-Package LevelUp.StateMachine -Version 2.0.1
+
+### .NET CLI
+
+    dotnet add package LevelUp.StateMachine --version 2.0.1
+
+### PackageReference
+
+    <PackageReference Include="LevelUp.StateMachine" Version="2.0.1" />
+
+### Packet CLI
+
+    paket add LevelUp.StateMachine --version 2.0.1
+>>>>>>> Stashed changes
 
 
 ## Tutorial
@@ -40,6 +56,20 @@ var translations = new Dictionary<(StateType, CommandType), StateType>
 
 // Instance StateMachine
 var stateMachine = new StateMachine<StateType, CommandType>(translations);
+```
+
+
+<br>
+
+```C#
+var translations = new Dictionary<StateType, StateType>
+{
+    {StateType.State1, StateType.State2},
+    {StateType.State2, StateType.State3}
+};
+
+// Instance StateMachine
+var stateMachine = new StateMachine<StateType>(translations);
 ```
 
 
@@ -71,6 +101,14 @@ stateMachine
 ```
 
 
+<br>
+
+```C#
+stateMachine
+    .AddTranslation(StateType.State1, StateType.State2)
+    .AddTranslation(StateType.State2, StateType.State3);
+```
+
 ### Init StateData
 
 ```C#
@@ -97,7 +135,7 @@ stateMachine.TranslateTo(stateData, StateType.State3);
 
 ```C#
 // Read current state
-Console.WriteLine(stateData.State);
+var state = stateData.State;
 ```
 
 
@@ -105,7 +143,7 @@ Console.WriteLine(stateData.State);
 
 ```C#
 // Read current state
-Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Command1).State);
+var state = stateMachine.Trigger(stateData, CommandType.Command1).State;
 ```
 
 
@@ -113,7 +151,21 @@ Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Command1).State);
 
 ```C#
 // Read current state
-Console.WriteLine(stateMachine.TranslateTo(stateData, StateType.State3).State); 
+var state = stateMachine.TranslateTo(stateData, StateType.State3).State; 
+```
+
+### Check transaction
+
+```C#
+// Check transaction
+var hasTranslation = stateMachine.HasTranslation(sourceState, command);
+```
+
+<br>
+
+```C#
+// Check transaction
+var hasTranslation = stateMachine.HasTranslation(sourceState, targetState);
 ```
 
 ### Event handling
