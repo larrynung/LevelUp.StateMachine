@@ -120,15 +120,15 @@ Console.WriteLine(stateMachine.TranslateTo(stateData, StateType.State3).State);
 ### Event handling
 
 ```C#
-stateMachine.CommandTrigger += (sender, args) => { 
+stateMachine.CommandTrigger += (sender, e) => { 
     Console.WriteLine("CommandTrigger..."); 
 };
 
-stateMachine.StateChanging += (sender, args) => { 
+stateMachine.StateChanging += (sender, e) => { 
     Console.WriteLine("StateChanging..."); 
 };
 
-stateMachine.StateChanged += (sender, args) => { 
+stateMachine.StateChanged += (sender, e) => { 
     Console.WriteLine("StateChanged..."); 
 };
 ```
