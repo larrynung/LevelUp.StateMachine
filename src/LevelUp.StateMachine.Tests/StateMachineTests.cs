@@ -203,5 +203,41 @@ namespace LevelUp.StateMachine.Tests
             // Assert
             Assert.IsNotNull(actual);
         }
+        
+        [Test]
+        public void HasTranslation_WithAcceptableTargetState_ReturnTrue()
+        {
+            // Arrange
+            var translations = new Dictionary<StateType, StateType>
+            {
+                {StateType.State1, StateType.State2}
+            };
+            var target = new StateMachine<StateType>(translations);
+            var actual = default(bool);
+
+            // Act
+            actual = target.HasTranslation(StateType.State1, StateType.State2);
+
+            // Assert
+            Assert.IsTrue(actual);
+        }
+        
+        [Test]
+        public void HasTranslation_WithUnAcceptableTargetState_ReturnFalse()
+        {
+            // Arrange
+            var translations = new Dictionary<StateType, StateType>
+            {
+                {StateType.State1, StateType.State2}
+            };
+            var target = new StateMachine<StateType>(translations);
+            var actual = default(bool);
+
+            // Act
+            actual = target.HasTranslation(StateType.State1, StateType.State3);
+
+            // Assert
+            Assert.IsFalse(actual);
+        }
     }
 }

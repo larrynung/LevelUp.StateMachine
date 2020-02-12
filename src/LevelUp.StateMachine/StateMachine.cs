@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LevelUp.StateMachine.Enums;
 using LevelUp.StateMachine.EventArgs;
 
 namespace LevelUp.StateMachine
@@ -9,7 +10,7 @@ namespace LevelUp.StateMachine
     /// 
     /// </summary>
     /// <typeparam name="TState"></typeparam>
-    public class StateMachine<TState> : StateMachine<TState, TState>
+    public class StateMachine<TState> : StateMachine<TState, NullCommandType>
         where TState : Enum
     {
         #region Constructors
@@ -19,7 +20,7 @@ namespace LevelUp.StateMachine
         /// <param name="translations">translations, which define relation between states with command</param>
         public StateMachine(IDictionary<TState, TState> translations = null)
         {
-            this.Translations = translations.ToDictionary(item => (item.Key, item.Value), item => item.Value);
+            this.Translations = translations.ToDictionary(item => (item.Key, NullCommandType.None), item => item.Value);
         }
         #endregion
         
@@ -35,7 +36,7 @@ namespace LevelUp.StateMachine
         public virtual StateMachine<TState> AddTranslation(TState sourceState, TState targetState)
         {
             var translations = this.Translations;
-            var key = (sourceState, targetState);
+            var key = (sourceState, NullCommandType.None);
 
             if (translations.ContainsKey(key))
                 throw new Exception("Duplicated translation!!");
