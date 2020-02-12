@@ -1,7 +1,27 @@
 # LevelUp.StateMachine
 
+## Install
 
-## Instance StateMachine
+### Package Manager
+
+    Install-Package LevelUp.StateMachine -Version 2.0.0
+
+### .NET CLI
+
+    dotnet add package LevelUp.StateMachine --version 2.0.0
+
+### PackageReference
+
+    <PackageReference Include="LevelUp.StateMachine" Version="2.0.0" />
+
+### Packet CLI
+
+    paket add LevelUp.StateMachine --version 2.0.0
+
+
+## Tutorial
+
+### Instance StateMachine
 
 ```C#
 // Instance StateMachine
@@ -44,7 +64,7 @@ public class MyStateMachine : StateMachine<StateType, CommandType>
 var stateMachine = new MyStateMachine();
 ```
 
-## Add translations
+### Add translations
 
 ```C#
 stateMachine
@@ -53,28 +73,28 @@ stateMachine
 ```
 
 
-## Init StateData
+### Init StateData
 
 ```C#
 var stateData = new StateData<StateType>(StateType.State1);
 ```
 
 
-## Trigger transaction
+### Trigger transaction
 
 ```C#
 // Trigger transaction
 stateMachine.Trigger(stateData, CommandType.Command1);
 ```
 
-## Translate to target state
+### Translate to target state
 
 ```C#
 // Translate to target state
 stateMachine.TranslateTo(stateData, StateType.State3);
 ```
 
-## Read current state
+### Read current state
 
 ```C#
 // Read current state
@@ -97,7 +117,7 @@ Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Command1).State);
 Console.WriteLine(stateMachine.TranslateTo(stateData, StateType.State3).State); 
 ```
 
-## Event handling
+### Event handling
 
 ```C#
 stateMachine.CommandTrigger += (sender, args) => { 
