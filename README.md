@@ -48,8 +48,6 @@ var stateMachine = new StateMachine<StateType, CommandType>(translations);
 ```C#
 public class MyStateMachine : StateMachine<StateType, CommandType>
 {
-    public static MyStateMachine Default { get; } = new MyStateMachine();
-
     public MyStateMachine()
     {
         this.Translations = new Dictionary<(StateType, CommandType), StateType>
@@ -76,6 +74,7 @@ stateMachine
 ### Init StateData
 
 ```C#
+// Init StateData
 var stateData = new StateData<StateType>(StateType.State1);
 ```
 
@@ -131,4 +130,39 @@ stateMachine.StateChanging += (sender, e) => {
 stateMachine.StateChanged += (sender, e) => { 
     Console.WriteLine("StateChanged..."); 
 };
+```
+
+## Example
+
+![](./image/statemachine.png)
+
+```C#
+public class MyStateMachine : StateMachine<StateType, CommandType>
+{
+    public MyStateMachine()
+    {
+        this.Translations = new Dictionary<(StateType, CommandType), StateType>
+        {
+            {(StateType.Opening, CommandType.SensorOpened), StateType.Opened},
+            {(StateType.Opening, CommandType.Close), StateType.Closing},
+            {(StateType.Opened, CommandType.Close), StateType.Closing},
+            {(StateType.Closing, CommandType.Open), StateType.Opening},
+            {(StateType.Closing, CommandType.SensorClosed), StateType.Closed},
+            {(StateType.Closing, CommandType.SensorClosed), StateType.Closed},
+            {(StateType.Closed, CommandType.Open), StateType.Opening}
+        };
+    }
+}
+
+// Instance StateMachine
+var stateMachine = new MyStateMachine();
+
+// Init StateData
+var stateData = new StateData<StateType>(StateType.Opening);
+
+Console.WriteLine(stateMachine.Trigger(stateData, CommandType.SensorOpened).State);
+Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Open).State);
+Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Close).State);
+Console.WriteLine(stateMachine.Trigger(stateData, CommandType.SensorClosed).State);
+Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Open).State);
 ```
