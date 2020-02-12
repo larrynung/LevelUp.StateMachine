@@ -173,11 +173,11 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
+            var translations = new Dictionary<StateType, StateType>
             {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
+                {StateType.State1, StateType.State2}
             };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new StateMachine<StateType>(translations);
             var actual = default(bool);
 
             target.StateChanged += (sender, args) => { actual = true; };

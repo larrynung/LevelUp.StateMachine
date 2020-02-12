@@ -6,6 +6,48 @@ using LevelUp.StateMachine.EventArgs;
 namespace LevelUp.StateMachine
 {
     /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TState"></typeparam>
+    public class StateMachine<TState> : StateMachine<TState, TState>
+        where TState : Enum
+    {
+        #region Constructors
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="translations">translations, which define relation between states with command</param>
+        public StateMachine(IDictionary<TState, TState> translations = null)
+        {
+            this.Translations = translations.ToDictionary(item => (item.Key, item.Value), item => item.Value);
+        }
+        #endregion
+        
+        #region Public methods
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceState"></param>
+        /// <param name="command"></param>
+        /// <param name="targetState"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public virtual StateMachine<TState> AddTranslation(TState sourceState, TState targetState)
+        {
+            var translations = this.Translations;
+            var key = (sourceState, targetState);
+
+            if (translations.ContainsKey(key))
+                throw new Exception("Duplicated translation!!");
+
+            translations[key] = targetState;
+
+            return this;
+        }
+        #endregion
+    }
+
+    /// <summary>
     /// StateMachine class, ease to use finite state machine
     /// </summary>
     /// <typeparam name="TState">state</typeparam>
@@ -42,6 +84,31 @@ namespace LevelUp.StateMachine
 
         #region Public methods
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceState"></param>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public bool HasTranslation(TState sourceState, TCommand command)
+        {
+            var key = (sourceState, command);
+            
+            return this.Translations.ContainsKey(key);
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceState"></param>
+        /// <param name="targetState"></param>
+        /// <returns></returns>
+        public bool HasTranslation(TState sourceState, TState targetState)
+        {
+            return this.Translations.Any(item =>
+                Equals(item.Key.Item1, sourceState) && Equals(item.Value, targetState));
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="stateData"></param>
         /// <param name="targetState"></param>
@@ -49,14 +116,13 @@ namespace LevelUp.StateMachine
         /// <exception cref="Exception"></exception>
         public StateData<TState> TranslateTo(StateData<TState> stateData, TState targetState, params object[] args)
         {
-            var currentState = stateData.State;
-            var haveTranslation = this.Translations.Any(item =>
-                Equals(item.Key.Item1, currentState) && Equals(item.Value, targetState));
+            var sourceState = stateData.State;
+            var hasTranslation = HasTranslation(sourceState, targetState);
 
-            if (!haveTranslation)
+            if (!hasTranslation)
             {
                 throw new Exception(
-                    $"Translation form {currentState.ToString()} to {targetState.ToString()} is not found!!");
+                    $"Translation form {sourceState.ToString()} to {targetState.ToString()} is not found!!");
             }
 
             ChangeToState(stateData, targetState, args);
@@ -75,13 +141,15 @@ namespace LevelUp.StateMachine
         {
             OnCommandTrigger(new CommandEventArgs<TState, TCommand>(stateData, command, args));
 
-            var currentState = stateData.State;
-            var key = (currentState, command);
-            var haveTranslation = this.Translations.TryGetValue(key, out var targetState);
+            var sourceState = stateData.State;
+            var hasTranslation = HasTranslation(sourceState, command);
 
-            if (!haveTranslation)
-                throw new Exception($"Translation({currentState.ToString()}.{command.ToString()}) not found!!");
+            if (!hasTranslation)
+                throw new Exception($"Translation({sourceState.ToString()}.{command.ToString()}) not found!!");
 
+            var key = (currentState: sourceState, command);
+            var targetState = this.Translations[key];
+            
             ChangeToState(stateData, targetState, args);
 
             return stateData;
