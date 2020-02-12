@@ -193,12 +193,32 @@ public class MyStateMachine : StateMachine<StateType, CommandType>
 // Instance StateMachine
 var stateMachine = new MyStateMachine();
 
+// Hook event
+stateMachine.CommandTrigger += (sender, e) => { 
+    Console.WriteLine(e.StateData.State); 
+};
+
+stateMachine.StateChanging += (sender, e) => { 
+    Console.WriteLine(e.StateData.State); 
+};
+
+stateMachine.StateChanged += (sender, e) => { 
+    Console.WriteLine(e.StateData.State); 
+};
+
 // Init StateData
 var stateData = new StateData<StateType>(StateType.Opening);
 
-Console.WriteLine(stateMachine.Trigger(stateData, CommandType.SensorOpened).State);
-Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Open).State);
-Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Close).State);
-Console.WriteLine(stateMachine.Trigger(stateData, CommandType.SensorClosed).State);
-Console.WriteLine(stateMachine.Trigger(stateData, CommandType.Open).State);
+// Trigger transaction
+stateMachine.Trigger(stateData, StateType.Opened);
+stateMachine.Trigger(stateData, StateType.Opening);
+stateMachine.Trigger(stateData, StateType.Closing);
+stateMachine.Trigger(stateData, StateType.Closed);
+
+// Translate to target state
+stateMachine.TranslateTo(stateData, CommandType.SensorOpened);
+stateMachine.TranslateTo(stateData, CommandType.Open);
+stateMachine.TranslateTo(stateData, CommandType.Close);
+stateMachine.TranslateTo(stateData, CommandType.SensorClosed);
+stateMachine.TranslateTo(stateData, CommandType.Open);
 ```
