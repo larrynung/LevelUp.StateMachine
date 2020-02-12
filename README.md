@@ -210,15 +210,15 @@ stateMachine.StateChanged += (sender, e) => {
 var stateData = new StateData<StateType>(StateType.Opening);
 
 // Trigger transaction
-stateMachine.Trigger(stateData, StateType.Opened);
-stateMachine.Trigger(stateData, StateType.Opening);
-stateMachine.Trigger(stateData, StateType.Closing);
-stateMachine.Trigger(stateData, StateType.Closed);
+stateMachine.Trigger(stateData, CommandType.SensorOpened);
+stateMachine.Trigger(stateData, CommandType.Open);
+stateMachine.Trigger(stateData, CommandType.Close);
+stateMachine.Trigger(stateData, CommandType.SensorClosed);
+stateMachine.Trigger(stateData, CommandType.Open);
 
 // Translate to target state
-stateMachine.TranslateTo(stateData, CommandType.SensorOpened);
-stateMachine.TranslateTo(stateData, CommandType.Open);
-stateMachine.TranslateTo(stateData, CommandType.Close);
-stateMachine.TranslateTo(stateData, CommandType.SensorClosed);
-stateMachine.TranslateTo(stateData, CommandType.Open);
+stateMachine.TranslateTo(stateData, StateType.Opened);
+stateMachine.TranslateTo(stateData, StateType.Opening);
+stateMachine.TranslateTo(stateData, StateType.Closing);
+stateMachine.TranslateTo(stateData, StateType.Closed);
 ```
