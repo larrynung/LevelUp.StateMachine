@@ -1,6 +1,6 @@
 using System;
 
-namespace LevelUp.StateMachine
+namespace LevelUp.StateMachine.Models
 {
     /// <summary>
     /// </summary>

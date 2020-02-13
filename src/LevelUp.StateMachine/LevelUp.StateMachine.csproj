@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageId>LevelUp.StateMachine</PackageId>
-        <Version>2.0.2</Version>
+        <Version>3.0.0</Version>
         <Authors>LarryNung</Authors>
         <Company>LevelUp</Company>
         <Description>A Simple Finite State Machine Solution</Description>

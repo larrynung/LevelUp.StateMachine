@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using LevelUp.StateMachine.Models;
 using LevelUp.StateMachine.Tests.Enums;
 using NUnit.Framework;
 
@@ -14,7 +14,7 @@ namespace LevelUp.StateMachine.Tests
             // Arrange
             const StateType expected = StateType.State2;
             var stateData = new StateData<StateType>(StateType.State1);
-            var target = new MyStateMachine();
+            var target = new MyStateMachineWithCommand();
             var actual = default(StateType);
 
             // Act
@@ -29,11 +29,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(bool);
 
             target.CommandTrigger += (sender, args) => { actual = true; };
@@ -50,11 +46,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(bool);
 
             target.StateChanging += (sender, args) => { actual = true; };
@@ -71,11 +63,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(bool);
 
             target.StateChanged += (sender, args) => { actual = true; };
@@ -92,11 +80,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(Exception);
 
             // Act
@@ -112,11 +96,7 @@ namespace LevelUp.StateMachine.Tests
             // Arrange
             const StateType expected = StateType.State2;
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(StateType);
 
             // Act
@@ -131,11 +111,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(bool);
 
             target.CommandTrigger += (sender, args) => { actual = true; };
@@ -152,11 +128,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<(StateType, CommandType), StateType>
-            {
-                {(StateType.State1, CommandType.Command1), StateType.State2}
-            };
-            var target = new StateMachine<StateType, CommandType>(translations);
+            var target = new MyStateMachineWithCommand();
             var actual = default(bool);
 
             target.StateChanging += (sender, args) => { actual = true; };
@@ -173,11 +145,7 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var translations = new Dictionary<StateType, StateType>
-            {
-                {StateType.State1, StateType.State2}
-            };
-            var target = new StateMachine<StateType>(translations);
+            var target = new MyStateMachineWithoutCommand();
             var actual = default(bool);
 
             target.StateChanged += (sender, args) => { actual = true; };
@@ -194,11 +162,11 @@ namespace LevelUp.StateMachine.Tests
         {
             // Arrange
             var stateData = new StateData<StateType>(StateType.State1);
-            var target = new StateMachine<StateType, CommandType>();
+            var target = new MyStateMachineWithCommand();
             var actual = default(Exception);
 
             // Act
-            actual = Assert.Throws<Exception>(() => target.TranslateTo(stateData, StateType.State2));
+            actual = Assert.Throws<Exception>(() => target.TranslateTo(stateData, StateType.State3));
 
             // Assert
             Assert.IsNotNull(actual);
@@ -208,11 +176,7 @@ namespace LevelUp.StateMachine.Tests
         public void HasTranslation_WithAcceptableTargetState_ReturnTrue()
         {
             // Arrange
-            var translations = new Dictionary<StateType, StateType>
-            {
-                {StateType.State1, StateType.State2}
-            };
-            var target = new StateMachine<StateType>(translations);
+            var target = new MyStateMachineWithoutCommand();
             var actual = default(bool);
 
             // Act
@@ -226,11 +190,7 @@ namespace LevelUp.StateMachine.Tests
         public void HasTranslation_WithUnAcceptableTargetState_ReturnFalse()
         {
             // Arrange
-            var translations = new Dictionary<StateType, StateType>
-            {
-                {StateType.State1, StateType.State2}
-            };
-            var target = new StateMachine<StateType>(translations);
+            var target = new MyStateMachineWithoutCommand();
             var actual = default(bool);
 
             // Act

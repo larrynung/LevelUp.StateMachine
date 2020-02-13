@@ -1,4 +1,5 @@
 using System;
+using LevelUp.StateMachine.Models;
 
 namespace LevelUp.StateMachine.EventArgs
 {

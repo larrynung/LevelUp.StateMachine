@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using LevelUp.StateMachine.Enums;
 using LevelUp.StateMachine.EventArgs;
+using LevelUp.StateMachine.Models;
 
 namespace LevelUp.StateMachine
 {
@@ -10,77 +10,34 @@ namespace LevelUp.StateMachine
     /// 
     /// </summary>
     /// <typeparam name="TState"></typeparam>
-    public class StateMachine<TState> : StateMachine<TState, NullCommandType>
+    public class StateMachine<TState>
         where TState : Enum
     {
         #region Constructors
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="translations">translations, which define relation between states with command</param>
-        public StateMachine(IDictionary<TState, TState> translations = null)
-        {
-            this.Translations = translations.ToDictionary(item => (item.Key, NullCommandType.None), item => item.Value);
-        }
-        #endregion
-        
-        #region Public methods
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="sourceState"></param>
-        /// <param name="command"></param>
-        /// <param name="targetState"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public virtual StateMachine<TState> AddTranslation(TState sourceState, TState targetState)
+        protected StateMachine()
         {
-            var translations = this.Translations;
-            var key = (sourceState, NullCommandType.None);
-
-            if (translations.ContainsKey(key))
-                throw new Exception("Duplicated translation!!");
-
-            translations[key] = targetState;
-
-            return this;
         }
-        #endregion
-    }
 
-    /// <summary>
-    /// StateMachine class, ease to use finite state machine
-    /// </summary>
-    /// <typeparam name="TState">state</typeparam>
-    /// <typeparam name="TCommand">command</typeparam>
-    public class StateMachine<TState, TCommand>
-        where TState : Enum
-        where TCommand : Enum
-    {
-        #region Private fields
-        private IDictionary<(TState, TCommand), TState> _translations;
-        #endregion
-
-        #region Constructors
         /// <summary>
-        /// Constructor
+        /// 
         /// </summary>
-        /// <param name="translations">translations, which define relation between states with command</param>
-        public StateMachine(IDictionary<(TState, TCommand), TState> translations = null)
+        /// <param name="translations"></param>
+        public StateMachine(IEnumerable<TranslationItem<TState>> translations)
+            : this()
         {
-            this.Translations = translations;
+            this.Translations =
+                translations.ToLookup(item => item.SourceState, item => item.TargetState);
         }
         #endregion
 
-        #region Protected properties
+        #region Private properties
         /// <summary>
         /// Gets the translations.
         /// </summary>
-        protected IDictionary<(TState, TCommand), TState> Translations
-        {
-            get { return _translations ??= new Dictionary<(TState, TCommand), TState>(); }
-            set { _translations = value; }
-        }
+        private ILookup<TState, TState> Translations { get; }
         #endregion
 
         #region Public methods
@@ -88,25 +45,14 @@ namespace LevelUp.StateMachine
         /// 
         /// </summary>
         /// <param name="sourceState"></param>
-        /// <param name="command"></param>
-        /// <returns></returns>
-        public bool HasTranslation(TState sourceState, TCommand command)
-        {
-            var key = (sourceState, command);
-            
-            return this.Translations.ContainsKey(key);
-        }
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sourceState"></param>
         /// <param name="targetState"></param>
         /// <returns></returns>
-        public bool HasTranslation(TState sourceState, TState targetState)
+        public virtual bool HasTranslation(TState sourceState, TState targetState)
         {
-            return this.Translations.Any(item =>
-                Equals(item.Key.Item1, sourceState) && Equals(item.Value, targetState));
+            var translations = this.Translations;
+
+            return translations.Any(item =>
+                Equals(item.Key, sourceState) && translations[item.Key].Contains(targetState));
         }
 
         /// <summary>
@@ -130,7 +76,112 @@ namespace LevelUp.StateMachine
 
             return stateData;
         }
+        #endregion
 
+        #region Protected methods
+        /// <summary>
+        /// </summary>
+        /// <param name="e"></param>
+        protected void OnStateChanged(StateChangedEventArgs<TState> e)
+        {
+            StateChanged?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Raises the <see cref="E:StateChanging" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="StateChangingEventArgs{TState}" /> instance containing the event data.</param>
+        protected void OnStateChanging(StateChangingEventArgs<TState> e)
+        {
+            StateChanging?.Invoke(this, e);
+        }
+        
+        /// <summary>
+        /// Changes to state.
+        /// </summary>
+        /// <param name="stateData"></param>
+        /// <param name="targetState">State of the target.</param>
+        /// <param name="args">The arguments.</param>
+        protected void ChangeToState(StateData<TState> stateData, TState targetState, params object[] args)
+        {
+            if (stateData.State.Equals(targetState))
+                return;
+
+            OnStateChanging(new StateChangingEventArgs<TState>(stateData, targetState, args));
+
+            stateData.State = targetState;
+
+            OnStateChanged(new StateChangedEventArgs<TState>(stateData, args));
+        }
+        #endregion
+
+        #region Others
+        /// <summary>
+        /// </summary>
+        public event EventHandler<StateChangedEventArgs<TState>> StateChanged;
+
+        /// <summary>
+        /// </summary>
+        public event EventHandler<StateChangingEventArgs<TState>> StateChanging;
+        #endregion
+    }
+
+    /// <summary>
+    /// StateMachine class, ease to use finite state machine
+    /// </summary>
+    /// <typeparam name="TState">state</typeparam>
+    /// <typeparam name="TCommand">command</typeparam>
+    public class StateMachine<TState, TCommand> : StateMachine<TState>
+        where TState : Enum
+        where TCommand : Enum
+    {
+        #region Constructors
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="translations"></param>
+        public StateMachine(IEnumerable<TranslationItem<TState, TCommand>> translations)
+        {
+            this.Translations =
+                translations.ToLookup(item => (item.SourceState, item.Command), item => item.TargetState);
+        }
+        #endregion
+
+        #region Private properties
+        /// <summary>
+        /// Gets the translations.
+        /// </summary>
+        private ILookup<(TState, TCommand), TState> Translations { get; }
+        #endregion
+
+        #region Public methods
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceState"></param>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public bool HasTranslation(TState sourceState, TCommand command)
+        {
+            var key = (sourceState, command);
+
+            return this.Translations.Contains(key);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceState"></param>
+        /// <param name="targetState"></param>
+        /// <returns></returns>
+        public override bool HasTranslation(TState sourceState, TState targetState)
+        {
+            var translations = this.Translations;
+
+            return translations.Any(item =>
+                Equals(item.Key.Item1, sourceState) && translations[item.Key].Contains(targetState));
+        }
+        
         /// <summary>
         /// Triggers the command.
         /// </summary>
@@ -149,32 +200,11 @@ namespace LevelUp.StateMachine
                 throw new Exception($"Translation({sourceState.ToString()}.{command.ToString()}) not found!!");
 
             var key = (currentState: sourceState, command);
-            var targetState = this.Translations[key];
-            
+            var targetState = this.Translations[key].Single();
+
             ChangeToState(stateData, targetState, args);
 
             return stateData;
-        }
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sourceState"></param>
-        /// <param name="command"></param>
-        /// <param name="targetState"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public StateMachine<TState, TCommand> AddTranslation(TState sourceState, TCommand command, TState targetState)
-        {
-            var translations = this.Translations;
-            var key = (sourceState, command);
-
-            if (translations.ContainsKey(key))
-                throw new Exception("Duplicated translation!!");
-
-            translations[key] = targetState;
-
-            return this;
         }
         #endregion
 
@@ -186,57 +216,12 @@ namespace LevelUp.StateMachine
         {
             CommandTrigger?.Invoke(this, e);
         }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="e"></param>
-        protected void OnStateChanged(StateChangedEventArgs<TState> e)
-        {
-            StateChanged?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Raises the <see cref="E:StateChanging" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="StateChangingEventArgs{TState}" /> instance containing the event data.</param>
-        protected void OnStateChanging(StateChangingEventArgs<TState> e)
-        {
-            StateChanging?.Invoke(this, e);
-        }
-        #endregion
-        
-        #region Private methods
-        /// <summary>
-        /// Changes to state.
-        /// </summary>
-        /// <param name="stateData"></param>
-        /// <param name="targetState">State of the target.</param>
-        /// <param name="args">The arguments.</param>
-        private void ChangeToState(StateData<TState> stateData, TState targetState, params object[] args)
-        {
-            if (stateData.State.Equals(targetState))
-                return;
-
-            OnStateChanging(new StateChangingEventArgs<TState>(stateData, targetState, args));
-
-            stateData.State = targetState;
-
-            OnStateChanged(new StateChangedEventArgs<TState>(stateData, args));
-        }
         #endregion
 
         #region Others
         /// <summary>
         /// </summary>
         public event EventHandler<CommandEventArgs<TState, TCommand>> CommandTrigger;
-
-        /// <summary>
-        /// </summary>
-        public event EventHandler<StateChangedEventArgs<TState>> StateChanged;
-
-        /// <summary>
-        /// </summary>
-        public event EventHandler<StateChangingEventArgs<TState>> StateChanging;
         #endregion
     }
 }

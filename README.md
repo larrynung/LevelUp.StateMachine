@@ -4,19 +4,19 @@
 
 ### Package Manager
 
-    Install-Package LevelUp.StateMachine -Version 2.0.1
+    Install-Package LevelUp.StateMachine -Version 3.0.0
 
 ### .NET CLI
 
-    dotnet add package LevelUp.StateMachine --version 2.0.1
+    dotnet add package LevelUp.StateMachine --version 3.0.0
 
 ### PackageReference
 
-    <PackageReference Include="LevelUp.StateMachine" Version="2.0.1" />
+    <PackageReference Include="LevelUp.StateMachine" Version="3.0.0" />
 
 ### Packet CLI
 
-    paket add LevelUp.StateMachine --version 2.0.1
+    paket add LevelUp.StateMachine --version 3.0.0
 
 
 ## Tutorial
@@ -24,29 +24,21 @@
 ### Instance StateMachine
 
 ```C#
-// Instance StateMachine
-var stateMachine = new StateMachine<StateType, CommandType>();
-```
-
-
-<br>
-
-```C#
-var translations = new Dictionary<(StateType, CommandType), StateType>
+var translations = new TranslationItemCollection<StateType, CommandType>
 {
-    {(StateType.State1, CommandType.Command1), StateType.State2},
-    {(StateType.State2, CommandType.Command2), StateType.State3}
+    {StateType.State1, CommandType.Command1, StateType.State2},
+    {StateType.State2, CommandType.Command2, StateType.State3}
 };
 
 // Instance StateMachine
 var stateMachine = new StateMachine<StateType, CommandType>(translations);
 ```
 
-
 <br>
 
+
 ```C#
-var translations = new Dictionary<StateType, StateType>
+var translations = new TranslationItemCollection<StateType>
 {
     {StateType.State1, StateType.State2},
     {StateType.State2, StateType.State3}
@@ -63,12 +55,17 @@ var stateMachine = new StateMachine<StateType>(translations);
 public class MyStateMachine : StateMachine<StateType, CommandType>
 {
     public MyStateMachine()
-    {
-        this.Translations = new Dictionary<(StateType, CommandType), StateType>
+        : base(new TranslationItemCollection<StateType, CommandType>
         {
-            {(StateType.State1, CommandType.Command1), StateType.State2},
-            {(StateType.State2, CommandType.Command2), StateType.State3}
-        };
+            {StateType.Opening, CommandType.SensorOpened, StateType.Opened},
+            {StateType.Opening, CommandType.Close, StateType.Closing},
+            {StateType.Opened, CommandType.Close, StateType.Closing},
+            {StateType.Closing, CommandType.Open, StateType.Opening},
+            {StateType.Closing, CommandType.SensorClosed, StateType.Closed},
+            {StateType.Closing, CommandType.SensorClosed, StateType.Closed},
+            {StateType.Closed, CommandType.Open, StateType.Opening}
+        })
+    {
     }
 }
 
@@ -76,22 +73,6 @@ public class MyStateMachine : StateMachine<StateType, CommandType>
 var stateMachine = new MyStateMachine();
 ```
 
-### Add translations
-
-```C#
-stateMachine
-    .AddTranslation(StateType.State1, CommandType.Command1, StateType.State2)
-    .AddTranslation(StateType.State2, CommandType.Command2, StateType.State3);
-```
-
-
-<br>
-
-```C#
-stateMachine
-    .AddTranslation(StateType.State1, StateType.State2)
-    .AddTranslation(StateType.State2, StateType.State3);
-```
 
 ### Init StateData
 
@@ -176,17 +157,17 @@ stateMachine.StateChanged += (sender, e) => {
 public class MyStateMachine : StateMachine<StateType, CommandType>
 {
     public MyStateMachine()
-    {
-        this.Translations = new Dictionary<(StateType, CommandType), StateType>
+        : base(new TranslationItemCollection<StateType, CommandType>
         {
-            {(StateType.Opening, CommandType.SensorOpened), StateType.Opened},
-            {(StateType.Opening, CommandType.Close), StateType.Closing},
-            {(StateType.Opened, CommandType.Close), StateType.Closing},
-            {(StateType.Closing, CommandType.Open), StateType.Opening},
-            {(StateType.Closing, CommandType.SensorClosed), StateType.Closed},
-            {(StateType.Closing, CommandType.SensorClosed), StateType.Closed},
-            {(StateType.Closed, CommandType.Open), StateType.Opening}
-        };
+            {StateType.Opening, CommandType.SensorOpened, StateType.Opened},
+            {StateType.Opening, CommandType.Close, StateType.Closing},
+            {StateType.Opened, CommandType.Close, StateType.Closing},
+            {StateType.Closing, CommandType.Open, StateType.Opening},
+            {StateType.Closing, CommandType.SensorClosed, StateType.Closed},
+            {StateType.Closing, CommandType.SensorClosed, StateType.Closed},
+            {StateType.Closed, CommandType.Open, StateType.Opening}
+        })
+    {
     }
 }
 
